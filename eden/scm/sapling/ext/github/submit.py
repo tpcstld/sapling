@@ -32,9 +32,11 @@ from .templates import _GITHUB_PULL_REQUEST_URL_REVCACHE_KEY
 def submit(ui, repo, *args, **opts) -> int:
     """Create or update GitHub pull requests."""
     github_repo = check_github_repo(repo)
-    is_draft = opts.get("draft")
+    is_draft = opts.get("draft") or False
+    given_branch_name= args[0] if len(args) > 0 else None
+
     return asyncio.run(
-        update_commits_in_stack(ui, repo, github_repo, is_draft=is_draft)
+        update_commits_in_stack(ui, repo, github_repo, is_draft=is_draft, given_branch_name=given_branch_name)
     )
 
 
@@ -148,7 +150,7 @@ async def get_partitions(ui, repo, store, filter) -> List[List[CommitData]]:
 
 
 async def update_commits_in_stack(
-    ui, repo, github_repo: GitHubRepo, is_draft: bool
+    ui, repo, github_repo: GitHubRepo, is_draft: bool, given_branch_name: Optional[str]
 ) -> int:
     parents = repo.dirstate.parents()
     if parents[0] == nullid:
@@ -171,7 +173,7 @@ async def update_commits_in_stack(
         )
     else:
         params = await create_serial_strategy_params(
-            ui, partitions, github_repo, origin
+            ui, partitions, github_repo, origin, given_branch_name
         )
 
     max_pull_requests_to_create = ui.configint("github", "max-prs-to-create", "5")
@@ -364,6 +366,7 @@ async def create_serial_strategy_params(
     partitions: List[List[CommitData]],
     github_repo: GitHubRepo,
     origin: str,
+    given_branch_name: Optional[str],
 ) -> SerialStrategyParams:
     # git push --force any heads that need updating, creating new branch names,
     # if necessary.
@@ -409,7 +412,7 @@ async def create_serial_strategy_params(
                     next_pull_request_number = result.unwrap()
             else:
                 next_pull_request_number += 1
-            branch_name = get_pr_branch_name(
+            branch_name = given_branch_name or get_pr_branch_name(
                 ui=ui,
                 ctx=top.ctx,
                 upstream_repository=repository,

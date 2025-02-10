@@ -105,6 +105,7 @@ subcmd = pull_request_command.subcommand(
         ("m", "message", None, _("message describing changes to updated commits")),
         ("d", "draft", False, _("mark new pull requests as draft")),
     ],
+    _("BRANCH_NAME"),
 )
 def submit_cmd(ui, repo, *args, **opts):
     """create or update GitHub pull requests from local commits

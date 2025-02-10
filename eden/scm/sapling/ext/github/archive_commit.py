@@ -22,6 +22,8 @@ async def add_commit_to_archives(
     repository: Repository,
     get_gitdir: Callable[[], str],
 ):
+    return
+
     """Takes the specified commit (oid_to_archive) and merges it into the
     appropriate archive branch for the (repo, username). GitHub will
     periodically garbage collect commits that are no longer part of a public
@@ -35,7 +37,7 @@ async def add_commit_to_archives(
     if not username:
         raise error.Abort(_("could not determine GitHub username"))
 
-    branch_name = f"sapling-pr-archive-{username}"
+    branch_name = f"{username}/sapling-pr-archive-{username}"
     # Try to merge the commit directly, though this may fail if oid_to_archive
     # has already been merged or if the branch has not been created before. We
     # try to merge without checking for the existence of the branch to try to
